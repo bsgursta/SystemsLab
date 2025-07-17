@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from torch.optim import optimizer
+from torch.utils.data import TensorDataset, DataLoader
 
 
 #subclassing torch module -> class inheritance basically
@@ -79,6 +80,13 @@ class LSTM(nn.Module):
         test = df.loc[test.index, :]
         test.drop('sales', axis=1, inplace=True)
 
+        #clean training dataset where sales aren't there
+        clean = train.dropna(subset=['sales'])
+
+        features = clean.columns.difference(['date'])
+        x = clean[features].values
+        y = clean['sales']
+
         model =  LSTM(4,100,1,1)
             #mean squared error
         criterion = nn.MSELoss()
@@ -86,13 +94,15 @@ class LSTM(nn.Module):
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 
-    #Prepare data
+        #Prepare data
+        train_dataset = TensorDataset(torch.from_numpy(x), torch.from_numpy(y))
+        dl = DataLoader(train_dataset, batch_size=64, shuffle=True)
 
         #write training loop
         for epoch in range(10):
             running_loss = 0.0
 
-            for i, data in enumerate(dl,0):
+            for i, data in enumerate(,0):
                 inputs, labels = data
 
                 optimizer.zero_grad()
